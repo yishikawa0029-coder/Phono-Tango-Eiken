@@ -3,13 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="color-scheme" content="light">
 <title>Phono-Tango Eiken — 英検5級〜準2級</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;500;700;800&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#EAEDF7;
+    color-scheme: light;
+    --bg:#F7F8FB;
     --surface:#FFFFFF;
     --ink:#1E2340;
     --muted:#757B9A;
@@ -27,14 +29,11 @@
     --en:"Outfit",system-ui,sans-serif;
   }
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-  html,body{height:100%}
+  html,body{height:100%;background:#F7F8FB}
   body{
     font-family:var(--jp);
     color:var(--ink);
-    background:
-      radial-gradient(120% 80% at 100% 0%, #F0ECFB 0%, transparent 55%),
-      radial-gradient(110% 70% at 0% 100%, #E4F5EF 0%, transparent 50%),
-      var(--bg);
+    background:#F7F8FB;
     min-height:100dvh;
     display:flex;justify-content:center;
     padding:env(safe-area-inset-top) 14px env(safe-area-inset-bottom);
@@ -43,6 +42,7 @@
     width:100%;max-width:440px;
     display:flex;flex-direction:column;
     min-height:100dvh;padding:18px 0 28px;
+    background:#F7F8FB;
   }
   /* ---------- shared ---------- */
   .brand{display:flex;align-items:center;gap:10px;margin-bottom:18px}
@@ -240,12 +240,22 @@
 .study-done p{color:#7B80A0;margin-bottom:20px}
 .study-done .btn{margin-bottom:10px}
 </style>
-<meta name="theme-color" content="#4A3DCB">
+<meta name="theme-color" content="#F7F8FB">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Phono-Tango Eiken">
 <link rel="manifest" href="./manifest.json">
 <link rel="apple-touch-icon" href="./icon-192.png">
+
+  <style>
+    /* 強制ダーク環境でも読めるよう、地に乗る要素を明るいカード地に固定 */
+    .brand{ background:#FFFFFF; border:1px solid var(--line); border-radius:16px; padding:12px 14px; }
+    .quiz-top{ background:#FFFFFF; border:1px solid var(--line); border-radius:14px; padding:10px 12px; }
+    #dq{ background:#FFFFFF; border:1px solid var(--line); border-radius:12px; padding:12px 14px; color:var(--ink); }
+    .section-label{ color:var(--ink) !important; }
+    .brand h1{ color:var(--ink); } .brand h1 span{ color:var(--muted); }
+    .count, .dscore{ color:var(--ink) !important; }
+  </style>
 </head>
 <body>
 <div class="app">
@@ -267,6 +277,14 @@
       <select id="setSelect" aria-label="単語帳をえらぶ"></select>
     </div>
 
+    <p class="section-label" style="margin-top:18px">級をえらぶ（演習・読解・英作文）</p>
+    <div class="pills" id="gradePills">
+      <button class="pill" data-grade="5級" aria-pressed="false">5級</button>
+      <button class="pill" data-grade="4級" aria-pressed="false">4級</button>
+      <button class="pill" data-grade="3級" aria-pressed="true">3級</button>
+      <button class="pill" data-grade="準2級" aria-pressed="false">準2級</button>
+    </div>
+
     <p class="section-label" style="margin-top:18px">モードをえらぶ</p>
     <div class="mode-grid">
       <button class="mode" data-mode="choice" aria-pressed="true">
@@ -280,6 +298,18 @@
       <button class="mode" data-mode="study" aria-pressed="false">
         <span class="ico">🧠</span>
         <span><span class="t">覚えるモード</span><span class="d">カードで意味・発音・例文を見て覚える</span></span>
+      </button>
+      <button class="mode" data-mode="drill" aria-pressed="false">
+        <span class="ico">📝</span>
+        <span><span class="t">語句空所補充</span><span class="d">英検 大問1形式。級にあわせて空所を補う</span></span>
+      </button>
+      <button class="mode" data-mode="read" aria-pressed="false">
+        <span class="ico">📄</span>
+        <span><span class="t">読解</span><span class="d">英検 大問3形式。長文を読んで内容を答える</span></span>
+      </button>
+      <button class="mode" data-mode="write" aria-pressed="false">
+        <span class="ico">✉️</span>
+        <span><span class="t">Eメール英作文</span><span class="d">英検 新形式。返信を書いて模範解答で確認</span></span>
       </button>
     </div>
 
@@ -298,6 +328,7 @@
     </div>
 
     <div style="margin-top:18px"><button class="btn" id="startBtn">はじめる</button></div>
+    <div style="margin-top:10px"><button class="btn btn-sub" id="statsBtn">📊 成績・弱点を見る</button></div>
 
     <div class="home-foot">
       <button class="btn ghost" id="soundBtn">🔊 効果音 ON</button>
@@ -319,6 +350,119 @@
     <div class="feedback" id="feedback"></div>
     <div class="example" id="example"></div>
     <button class="btn" id="nextBtn" style="display:none">次へ</button>
+  </section>
+
+  <!-- ============ DRILL (語句空所補充) ============ -->
+  <style>
+    #drill .blank{display:inline-block;min-width:60px;border-bottom:2px solid currentColor;text-align:center;opacity:.55;font-weight:700;margin:0 2px}
+    #drill #dq{font-size:1.12rem;line-height:1.7;padding:18px 4px 10px;font-weight:600}
+    #drill .dscore{font-size:.82rem;opacity:.7;margin-left:auto;align-self:center}
+    #drill #dGrade{font-size:.72rem;font-weight:700;background:#FDE9C8;color:#B26B00;border-radius:8px;padding:2px 9px;align-self:center}
+    #dexp{margin-top:14px;border-radius:14px;padding:14px 16px;background:#F3F4FC;color:var(--ink);font-size:.92rem;line-height:1.6;display:none}
+    #dexp .dexp-h{font-weight:700;margin-bottom:6px}
+    #dexp .dexp-h.ok{color:#16a34a} #dexp .dexp-h.ng{color:#dc2626}
+    #drill .dresult{text-align:center;padding:34px 8px;font-size:1.05rem;line-height:1.8}
+    #drill .dresult .dbig{font-size:2.4rem;font-weight:800}
+  </style>
+  <section class="screen" id="drill">
+    <div class="quiz-top">
+      <span class="count" id="dCount">1 / 10</span>
+      <div class="bar"><i id="dBar" style="width:0%"></i></div>
+      <span id="dGrade"></span>
+      <span class="dscore" id="dScore">正解 0</span>
+      <button class="quit" id="dQuit" aria-label="やめる">✕</button>
+    </div>
+    <div id="dq"></div>
+    <div class="choices" id="dchoices"></div>
+    <div id="dexp"></div>
+    <button class="btn" id="dNext" style="display:none">次の問題</button>
+  </section>
+
+  <!-- ============ WRITE (Eメール英作文) ============ -->
+  <style>
+    #wEmail{margin-top:6px;border-radius:14px;padding:14px 16px;background:#F3F4FC;color:var(--ink)}
+    #wEmail .rtype{display:inline-block;font-size:.72rem;font-weight:700;background:#E6E1FB;color:#5B4FE0;border-radius:8px;padding:2px 8px;margin-bottom:6px}
+    #wEmail .rbody{font-size:.92rem;line-height:1.7}
+    #wPoints{margin-top:12px;background:#FFF6E6;border:1px solid #FCE2B6;border-radius:12px;padding:12px 14px;color:var(--ink);font-size:.9rem}
+    #wPoints .wph{font-weight:700;margin-bottom:6px}
+    #wPoints ol{margin:0 0 6px 1.1em;padding:0} #wPoints li{margin:2px 0}
+    #wPoints .wtgt{font-size:.82rem;opacity:.75}
+    #wInput{width:100%;min-height:120px;margin-top:12px;border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-size:1rem;font-family:var(--en);color:var(--ink);background:#FFFFFF;resize:vertical;box-sizing:border-box}
+    #wCount{font-size:.82rem;opacity:.7;text-align:right;margin-top:4px}
+    #wGrade{font-size:.72rem;font-weight:700;background:#FDE9C8;color:#B26B00;border-radius:8px;padding:2px 9px;align-self:center}
+    #wAnswer{margin-top:14px;display:none}
+    #wAnswer .wsec{background:#F3F4FC;border-radius:12px;padding:12px 14px;margin-bottom:10px;color:var(--ink)}
+    #wAnswer .wsec-h{font-weight:700;margin-bottom:6px;font-size:.9rem}
+    #wAnswer .wmodel{font-family:var(--en);line-height:1.7;font-size:.95rem}
+    #wAnswer .wrub{margin:0;padding-left:1.1em;font-size:.86rem;line-height:1.6} #wAnswer .wrub li{margin:4px 0}
+    #wAnswer .wtips{font-size:.86rem;line-height:1.6}
+  </style>
+  <section class="screen" id="write">
+    <div class="quiz-top">
+      <span class="count" id="wCountTop">1 / 4</span>
+      <div class="bar"><i style="width:100%"></i></div>
+      <span id="wGrade"></span>
+      <button class="quit" id="wQuit" aria-label="やめる">✕</button>
+    </div>
+    <div id="wEmail"></div>
+    <div id="wPoints"></div>
+    <textarea id="wInput" placeholder="ここに英語で返信を書いてみましょう（書いたら下のボタンで答え合わせ）"></textarea>
+    <div id="wCount">0 語</div>
+    <button class="btn" id="wReveal">模範解答・自己採点を見る</button>
+    <div id="wAnswer"></div>
+    <button class="btn" id="wNext" style="display:none">次の問題</button>
+  </section>
+
+  <!-- ============ READ (読解) ============ -->
+  <style>
+    #rPassage{margin-top:6px;border-radius:14px;padding:14px 16px;background:#F3F4FC;color:var(--ink);max-height:40vh;overflow-y:auto}
+    #rPassage .rtype{display:inline-block;font-size:.72rem;font-weight:700;background:#E6E1FB;color:#5B4FE0;border-radius:8px;padding:2px 8px;margin-right:8px}
+    #rPassage .rtitle{font-weight:700;font-size:.95rem}
+    #rPassage .rbody{margin-top:10px;font-size:.92rem;line-height:1.7}
+    #rq{font-weight:700;font-size:1rem;line-height:1.6;margin:16px 4px 6px;background:#FFFFFF;border:1px solid var(--line);border-radius:12px;padding:12px 14px;color:var(--ink)}
+    #read #rGrade{font-size:.72rem;font-weight:700;background:#FDE9C8;color:#B26B00;border-radius:8px;padding:2px 9px;align-self:center}
+    #read .dscore{font-size:.82rem;opacity:.7;align-self:center}
+    #read .dresult{text-align:center;padding:34px 8px;font-size:1.05rem;line-height:1.8}
+    #read .dresult .dbig{font-size:2.4rem;font-weight:800}
+  </style>
+  <section class="screen" id="read">
+    <div class="quiz-top">
+      <span class="count" id="rCount">1 / 10</span>
+      <div class="bar"><i id="rBar" style="width:0%"></i></div>
+      <span id="rGrade"></span>
+      <span class="dscore" id="rScore">正解 0</span>
+      <button class="quit" id="rQuit" aria-label="やめる">✕</button>
+    </div>
+    <div id="rPassage"></div>
+    <div id="rq"></div>
+    <div class="choices" id="rchoices"></div>
+    <div id="rexp"></div>
+    <button class="btn" id="rNext" style="display:none">次の設問</button>
+  </section>
+
+  <!-- ============ STATS (成績・弱点) ============ -->
+  <style>
+    .btn-sub{background:#ECEEF8;color:var(--ink)}
+    #stats .stats-empty{text-align:center;opacity:.7;line-height:1.8;padding:28px 8px}
+    .hist-list{display:flex;flex-direction:column;gap:8px}
+    .hist-item{display:flex;align-items:center;gap:10px;background:#F3F4FC;border-radius:12px;padding:10px 14px;font-size:.9rem}
+    .hist-item .hi-mode{font-weight:700}
+    .hist-item .hi-score{margin-left:auto;font-variant-numeric:tabular-nums}
+    .hist-item .hi-date{opacity:.6;font-size:.8rem;min-width:64px;text-align:right}
+    .weak-list{display:flex;flex-direction:column;gap:10px}
+    .weak-item{display:flex;align-items:center;gap:10px;font-size:.86rem}
+    .weak-item .wi-name{min-width:96px;font-weight:600}
+    .weak-item .wi-bar{flex:1;height:8px;border-radius:6px;background:#E6E8F4;overflow:hidden}
+    .weak-item .wi-bar i{display:block;height:100%;background:#f59e0b}
+    .weak-item .wi-pct{min-width:70px;text-align:right;font-variant-numeric:tabular-nums;opacity:.8}
+  </style>
+  <section class="screen" id="stats">
+    <div class="quiz-top">
+      <span class="count">成績・弱点</span>
+      <div class="bar"><i style="width:100%"></i></div>
+      <button class="quit" id="statsBack" aria-label="もどる">✕</button>
+    </div>
+    <div id="statsBody"></div>
   </section>
 
   <!-- ============ STUDY (覚えるモード) ============ -->
@@ -2555,6 +2699,11 @@ $("#countPills").addEventListener("click",e=>{
   p.setAttribute("aria-pressed","true");
   countSel = p.dataset.count==="all" ? "all" : parseInt(p.dataset.count,10);
 });
+$("#gradePills").addEventListener("click",e=>{
+  const p=e.target.closest(".pill"); if(!p) return;
+  $("#gradePills").querySelectorAll(".pill").forEach(x=>x.setAttribute("aria-pressed","false"));
+  p.setAttribute("aria-pressed","true");
+});
 function selectRange(r){
   rangeSel = r;
   $("#rangePills").querySelectorAll(".pill").forEach(x=>
@@ -2584,7 +2733,366 @@ $("#setSelect").addEventListener("change",e=>{
   selectRange("all");   // 単語帳ごとに苦手語が変わるため範囲を初期化
   renderHome();
 });
-$("#startBtn").addEventListener("click",()=>{ if(mode==="study") startStudy(); else startSession(); });
+const QUIZ1E = [
+  {q:"I ___ to school every day.",choices:["go","goes","going","gone"],ans:0,point:"5級",exp:"主語 I には go。三単現の s は付けない。"},
+  {q:"She ___ a cute cat.",choices:["has","have","is","are"],ans:0,point:"5級",exp:"三人称単数 She には has。"},
+  {q:"___ you like music?",choices:["Do","Does","Are","Is"],ans:0,point:"5級",exp:"一般動詞の疑問文で主語 you → Do。"},
+  {q:"There are three ___ on the table.",choices:["books","book","a book","books's"],ans:0,point:"5級",exp:"three の後は複数形 books。"},
+  {q:"My brother is ___ TV now.",choices:["watching","watch","watches","watched"],ans:0,point:"5級",exp:"now があるので現在進行形 is watching。"},
+  {q:"This is ___ apple.",choices:["an","a","the","x"],ans:0,point:"5級",exp:"母音で始まる apple には an。"},
+  {q:"We play soccer ___ Sunday.",choices:["on","in","at","to"],ans:0,point:"5級",exp:"曜日には on。"},
+  {q:"I am ___ years old.",choices:["twelve","twelfth","twelve's","twelves"],ans:0,point:"5級",exp:"年齢は数字 twelve。"},
+  {q:"He can ___ very fast.",choices:["run","runs","running","ran"],ans:0,point:"5級",exp:"助動詞 can の後は原形 run。"},
+  {q:"Look! The birds ___ flying.",choices:["are","is","am","be"],ans:0,point:"5級",exp:"複数 birds には are。"},
+  {q:"What ___ is it now? — It's three o'clock.",choices:["time","day","color","name"],ans:0,point:"5級",exp:"時刻を聞くので time。"},
+  {q:"I like ___. They are sweet.",choices:["apples","music","water","English"],ans:0,point:"5級",exp:"They(複数)を受けるので apples。"},
+  {q:"___ is my mother. She is a teacher.",choices:["She","He","It","They"],ans:0,point:"5級",exp:"母を指すので She。"},
+  {q:"Please ___ down.",choices:["sit","sits","sitting","sat"],ans:0,point:"5級",exp:"命令文は原形 sit。"},
+  {q:"I go to bed ___ ten.",choices:["at","on","in","to"],ans:0,point:"5級",exp:"時刻には at。"},
+  {q:"Tom and I ___ good friends.",choices:["are","is","am","be"],ans:0,point:"5級",exp:"Tom and I(複数)→ are。"},
+  {q:"I ___ my homework yesterday.",choices:["did","do","does","doing"],ans:0,point:"4級",exp:"yesterday があるので過去形 did。"},
+  {q:"She is ___ than her sister.",choices:["taller","tall","tallest","more tall"],ans:0,point:"4級",exp:"than があるので比較級 taller。"},
+  {q:"We ___ go to the park tomorrow.",choices:["will","are","do","was"],ans:0,point:"4級",exp:"tomorrow → 未来 will go。"},
+  {q:"You ___ finish your work first.",choices:["must","are","does","being"],ans:0,point:"4級",exp:"「〜しなければならない」must。"},
+  {q:"I want ___ a doctor.",choices:["to be","be","being","is"],ans:0,point:"4級",exp:"want to + 原形。"},
+  {q:"He was ___ a book at that time.",choices:["reading","read","reads","to read"],ans:0,point:"4級",exp:"過去進行形 was reading。"},
+  {q:"This book is ___ interesting than that one.",choices:["more","much","very","most"],ans:0,point:"4級",exp:"長い形容詞の比較級は more。"},
+  {q:"There ___ many people in the park last Sunday.",choices:["were","was","are","is"],ans:0,point:"4級",exp:"過去・複数 → were。"},
+  {q:"I'm good ___ playing tennis.",choices:["at","in","on","to"],ans:0,point:"4級",exp:"be good at(〜が得意)。"},
+  {q:"Could you ___ me the way to the station?",choices:["tell","say","talk","speak"],ans:0,point:"4級",exp:"tell 人 物(教える)。"},
+  {q:"She didn't ___ to the party.",choices:["come","comes","came","coming"],ans:0,point:"4級",exp:"didn't の後は原形 come。"},
+  {q:"What ___ you do last weekend?",choices:["did","do","does","are"],ans:0,point:"4級",exp:"last weekend → 過去 did。"},
+  {q:"I have to ___ home by six.",choices:["get","got","getting","gets"],ans:0,point:"4級",exp:"have to + 原形 get。"},
+  {q:"He runs ___ than me.",choices:["faster","fast","fastest","more fast"],ans:0,point:"4級",exp:"than → 比較級 faster。"},
+  {q:"Let's ___ lunch together.",choices:["have","has","having","had"],ans:0,point:"4級",exp:"Let's + 原形 have。"},
+  {q:"Mike is the ___ student in his class.",choices:["tallest","taller","tall","more tall"],ans:0,point:"4級",exp:"the + 最上級 tallest。"},
+  {q:"I have ___ finished my homework.",choices:["already","yet","ever","still"],ans:0,point:"3級",exp:"肯定の現在完了で「もう」→ already。"},
+  {q:"This book was ___ by a famous writer.",choices:["written","write","wrote","writing"],ans:0,point:"3級",exp:"受動態 be + 過去分詞 written。"},
+  {q:"The boy ___ is playing the guitar is my friend.",choices:["who","which","whose","what"],ans:0,point:"3級",exp:"先行詞が人 → 主格 who。"},
+  {q:"I have lived here ___ 2010.",choices:["since","for","from","at"],ans:0,point:"3級",exp:"現在完了 + 起点 since 2010。"},
+  {q:"She enjoys ___ to music.",choices:["listening","listen","to listen","listened"],ans:0,point:"3級",exp:"enjoy + 動名詞 listening。"},
+  {q:"This is the ___ movie I have ever seen.",choices:["best","better","good","well"],ans:0,point:"3級",exp:"the + 最上級 best。"},
+  {q:"Have you ___ been to Kyoto?",choices:["ever","already","yet","since"],ans:0,point:"3級",exp:"現在完了の疑問「今までに」→ ever。"},
+  {q:"He has been sick ___ three days.",choices:["for","since","from","in"],ans:0,point:"3級",exp:"期間の長さ → for three days。"},
+  {q:"I want something ___ to drink.",choices:["cold","coldly","colder","coldest"],ans:0,point:"3級",exp:"-thing を後ろから修飾する形容詞 cold。"},
+  {q:"The homework was too difficult ___ me to do.",choices:["for","to","of","with"],ans:0,point:"3級",exp:"too ... for 人 to do。"},
+  {q:"If it ___ tomorrow, we will stay home.",choices:["rains","rain","rained","will rain"],ans:0,point:"3級",exp:"条件の if節は現在形 rains。"},
+  {q:"My father told me ___ hard.",choices:["to study","study","studied","studying"],ans:0,point:"3級",exp:"tell 人 to do。"},
+  {q:"The cake ___ by my mother is delicious.",choices:["made","make","makes","making"],ans:0,point:"3級",exp:"過去分詞 made(〜によって作られた)。"},
+  {q:"I don't know ___ to use this machine.",choices:["how","what","which","who"],ans:0,point:"3級",exp:"how to use(使い方)。"},
+  {q:"She is interested ___ Japanese culture.",choices:["in","on","at","to"],ans:0,point:"3級",exp:"be interested in。"},
+  {q:"This is the house ___ he lives in.",choices:["which","who","whose","where"],ans:0,point:"3級",exp:"先行詞が物 → which。"},
+  {q:"The store was closed, ___ we couldn't buy anything.",choices:["so","but","because","although"],ans:0,point:"準2級",exp:"「だから」結果を表す so。"},
+  {q:"I'm looking forward ___ seeing you.",choices:["to","for","at","of"],ans:0,point:"準2級",exp:"look forward to + 動名詞。"},
+  {q:"He kept ___ even though he was tired.",choices:["working","work","to work","worked"],ans:0,point:"準2級",exp:"keep + 動名詞(〜し続ける)。"},
+  {q:"You had ___ see a doctor soon.",choices:["better","best","good","well"],ans:0,point:"準2級",exp:"had better + 原形(〜した方がよい)。"},
+  {q:"The movie was ___ that I watched it twice.",choices:["so good","such good","too good","very good"],ans:0,point:"準2級",exp:"so + 形容詞 + that(とても〜なので)。"},
+  {q:"I'd like you ___ help me with this.",choices:["to","for","of","that"],ans:0,point:"準2級",exp:"would like 人 to do。"},
+  {q:"She apologized ___ being late.",choices:["for","to","of","with"],ans:0,point:"準2級",exp:"apologize for(〜を謝る)。"},
+  {q:"Please turn ___ the lights when you leave.",choices:["off","on","up","in"],ans:0,point:"準2級",exp:"turn off(消す)。"},
+  {q:"If I ___ rich, I would travel the world.",choices:["were","am","was","be"],ans:0,point:"準2級",exp:"仮定法過去 If I were。"},
+  {q:"He is responsible ___ the project.",choices:["for","to","of","with"],ans:0,point:"準2級",exp:"be responsible for。"},
+  {q:"I'm used ___ getting up early.",choices:["to","for","of","at"],ans:0,point:"準2級",exp:"be used to + 動名詞(慣れている)。"},
+  {q:"The news made everyone ___.",choices:["happy","happily","happiness","to happy"],ans:0,point:"準2級",exp:"make O 形容詞 happy。"},
+  {q:"We need to ___ a solution to this problem.",choices:["come up with","look after","give up","put off"],ans:0,point:"準2級",exp:"come up with(思いつく)。"},
+  {q:"It is important ___ enough sleep.",choices:["to get","getting","get","got"],ans:0,point:"準2級",exp:"It is ... to do の形式主語。"},
+  {q:"He couldn't help ___ at the joke.",choices:["laughing","laugh","to laugh","laughed"],ans:0,point:"準2級",exp:"can't help + 動名詞(〜せずにいられない)。"},
+  {q:"Despite ___ hard, he failed the exam.",choices:["studying","study","studied","to study"],ans:0,point:"準2級",exp:"despite + 動名詞(〜にもかかわらず)。"},
+];
+
+/* ====== 成績の記録・弱点分析（英検）====== */
+const LS_HIST="eiken_quiz_hist", LS_Q1PTS="eiken_q1_points";
+function qsLoad(k,d){ try{ const v=JSON.parse(localStorage.getItem(k)); return v==null?d:v; }catch(e){ return d; } }
+function saveResult(mode,score,total){
+  const h=qsLoad(LS_HIST,[]);
+  h.unshift({d:Date.now(),m:mode,s:score,t:total});
+  localStorage.setItem(LS_HIST, JSON.stringify(h.slice(0,30)));
+}
+function bumpPoint(point,correct){
+  const p=qsLoad(LS_Q1PTS,{});
+  if(!p[point]) p[point]={c:0,t:0};
+  p[point].t++; if(correct) p[point].c++;
+  localStorage.setItem(LS_Q1PTS, JSON.stringify(p));
+}
+function qsDate(ts){ const d=new Date(ts); return (d.getMonth()+1)+"/"+d.getDate()+" "+("0"+d.getHours()).slice(-2)+":"+("0"+d.getMinutes()).slice(-2); }
+function renderStats(){
+  const h=qsLoad(LS_HIST,[]), p=qsLoad(LS_Q1PTS,{});
+  let html="";
+  if(!h.length){
+    html='<p class="stats-empty">まだ演習の記録がありません。<br>「語句空所補充」を解くと、成績と級ごとの弱点がここに残ります。</p>';
+  } else {
+    const best=Math.max.apply(null, h.map(x=>Math.round(x.s/x.t*100)));
+    html+='<div class="stat-row">'
+      +'<div class="stat"><div class="num">'+h.length+'</div><div class="lbl">演習回数</div></div>'
+      +'<div class="stat"><div class="num">'+best+'%</div><div class="lbl">最高正答率</div></div>'
+      +'<div class="stat"><div class="num">'+h.reduce((s,x)=>s+x.s,0)+'</div><div class="lbl">のべ正解数</div></div>'
+      +'</div>';
+    html+='<p class="section-label">最近の成績</p><div class="hist-list">';
+    h.slice(0,8).forEach(x=>{ const pct=Math.round(x.s/x.t*100);
+      html+='<div class="hist-item"><span class="hi-mode">'+(x.m==="read"?"📄 読解":"📝 語句空所補充")+'</span><span class="hi-score">'+x.s+'/'+x.t+' ('+pct+'%)</span><span class="hi-date">'+qsDate(x.d)+'</span></div>'; });
+    html+='</div>';
+  }
+  const order={"5級":1,"4級":2,"3級":3,"準2級":4};
+  const pts=Object.entries(p).filter(([k,v])=>v.t>=3).map(([k,v])=>({k:k,acc:v.c/v.t,t:v.t})).sort((a,b)=>a.acc-b.acc).slice(0,6);
+  if(pts.length){
+    html+='<p class="section-label">苦手な級（正答率順）</p><div class="weak-list">';
+    pts.forEach(x=>{ const a=Math.round(x.acc*100); html+='<div class="weak-item"><span class="wi-name">英検'+x.k+'</span><div class="wi-bar"><i style="width:'+a+'%"></i></div><span class="wi-pct">'+a+'% ('+x.t+')</span></div>'; });
+    html+='</div>';
+  }
+  $("#statsBody").innerHTML=html;
+}
+$("#statsBtn").addEventListener("click",function(){ renderStats(); show("stats"); });
+$("#statsBack").addEventListener("click",function(){ renderHome(); show("home"); });
+
+
+/* ====== 英検 大問1 語句空所補充モード ====== */
+let dq=[], dIdx=0, dScore=0, dAnswered=false, drillDone=false;
+function eikenGrade(){
+  const p=document.querySelector('#gradePills .pill[aria-pressed="true"]');
+  return p ? p.dataset.grade : "3級";
+}
+function startDrill(){
+  let pool = QUIZ1E.slice();
+  const g = eikenGrade();
+  if(g){ const f=pool.filter(q=>q.point===g); if(f.length>=4) pool=f; }
+  const rw=document.querySelector('#rangePills .pill[aria-pressed="true"]');
+  if(rw && rw.dataset.range==="weak"){
+    const ps=qsLoad(LS_Q1PTS,{});
+    const weak=Object.entries(ps).filter(([k,v])=>v.t>=3 && (v.c/v.t)<0.8).map(([k])=>k);
+    if(weak.length){ const f=pool.filter(q=>weak.indexOf(q.point)>=0); if(f.length>=4) pool=f; }
+  }
+  dq=pool;
+  for(let i=dq.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [dq[i],dq[j]]=[dq[j],dq[i]]; }
+  const cp=document.querySelector('#countPills .pill[aria-pressed="true"]');
+  let cnt=cp?cp.dataset.count:"all";
+  if(cnt!=="all"){ dq=dq.slice(0, Math.min(parseInt(cnt,10), dq.length)); }
+  dIdx=0; dScore=0; drillDone=false;
+  show("drill"); renderDrill();
+}
+function renderDrill(){
+  dAnswered=false;
+  const item=dq[dIdx];
+  $("#dCount").textContent=(dIdx+1)+" / "+dq.length;
+  $("#dBar").style.width=(dIdx/dq.length*100)+"%";
+  $("#dScore").textContent="正解 "+dScore;
+  $("#dGrade").textContent=item.point;
+  $("#dq").innerHTML = item.q.replace("___",'<span class="blank">______</span>');
+  const e=$("#dexp"); e.style.display="none"; e.innerHTML="";
+  $("#dNext").style.display="none";
+  const keys=["A","B","C","D"];
+  const order=[0,1,2,3]; for(let z=order.length-1;z>0;z--){ const y=Math.floor(Math.random()*(z+1)); [order[z],order[y]]=[order[y],order[z]]; }
+  const box=$("#dchoices"); box.innerHTML="";
+  order.forEach(function(orig,k){
+    const b=document.createElement("button");
+    b.className="choice"; b.type="button"; b._orig=orig;
+    b.innerHTML='<span class="k">'+keys[k]+'</span><span>'+item.choices[orig]+'</span>';
+    b.addEventListener("click",function(){ drillAnswer(orig,item); });
+    box.appendChild(b);
+  });
+}
+function drillAnswer(i,item){
+  if(dAnswered) return; dAnswered=true;
+  const correct=(i===item.ans);
+  bumpPoint(item.point, correct);
+  const btns=[].slice.call($("#dchoices").children);
+  btns.forEach(function(b){ b.disabled=true; if(b._orig===item.ans) b.classList.add("correct"); else if(b._orig===i) b.classList.add("wrong"); });
+  if(correct){ dScore++; if(soundOn && typeof playCorrect==="function") playCorrect(); }
+  else { if(soundOn && typeof playWrong==="function") playWrong(); }
+  $("#dScore").textContent="正解 "+dScore;
+  const e=$("#dexp"); e.style.display="block";
+  e.innerHTML='<div class="dexp-h '+(correct?"ok":"ng")+'">'+(correct?"正解":"不正解")+'</div><div class="dexp-b">'+item.exp+'</div>';
+  const nb=$("#dNext"); nb.style.display="block";
+  nb.textContent = (dIdx>=dq.length-1) ? "結果を見る" : "次の問題";
+}
+function drillNext(){ if(dIdx>=dq.length-1){ drillResult(); return; } dIdx++; renderDrill(); }
+function drillResult(){
+  drillDone=true;
+  saveResult('q1', dScore, dq.length);
+  const pct=Math.round(dScore/dq.length*100);
+  $("#dq").innerHTML='<div class="dresult">おつかれさまでした<br><span class="dbig">'+dScore+' / '+dq.length+'</span><br>正答率 '+pct+'%</div>';
+  $("#dchoices").innerHTML=""; $("#dexp").style.display="none"; $("#dGrade").textContent="";
+  $("#dCount").textContent="完了"; $("#dBar").style.width="100%"; $("#dScore").textContent="正解 "+dScore;
+  const nb=$("#dNext"); nb.style.display="block"; nb.textContent="ホームへ";
+}
+$("#dNext").addEventListener("click",function(){ if(drillDone){ renderHome(); show("home"); } else drillNext(); });
+$("#dQuit").addEventListener("click",function(){ renderHome(); show("home"); });
+
+const READ7E = [
+  {grade:"4級",docs:[
+    {type:"掲示",title:"School Festival",body:"Green Hill Junior High School Festival\n\nDate: Saturday, October 12\nTime: 10:00 a.m. - 3:00 p.m.\nPlace: School gym and classrooms\n\nThere will be food, games, and a music show. The music show starts at 1:00 p.m. in the gym. Please come and enjoy! Tickets are not needed. Drinks are 100 yen each."},
+  ],qs:[
+    {q:"What time does the music show start?",choices:["10:00 a.m.","1:00 p.m.","3:00 p.m.","12:00 p.m."],ans:1,exp:"音楽ショーは午後1時開始。"},
+    {q:"How much is a drink?",choices:["Free","100 yen","200 yen","300 yen"],ans:1,exp:"飲み物は1杯100円。"},
+  ]},
+  {grade:"4級",docs:[
+    {type:"Eメール",title:"From a friend",body:"Hi Yuki,\n\nHow are you? I'm going to visit my grandmother in Osaka next week. She has a big dog named Pochi. I will stay there for three days. I will take many pictures and show them to you when I come back.\n\nSee you soon,\nMika"},
+  ],qs:[
+    {q:"Where will Mika go next week?",choices:["To Tokyo","To Osaka","To school","To the zoo"],ans:1,exp:"来週、大阪の祖母を訪ねる。"},
+    {q:"How long will Mika stay?",choices:["One day","Two days","Three days","One week"],ans:2,exp:"3日間滞在する。"},
+  ]},
+  {grade:"3級",docs:[
+    {type:"説明文",title:"A Special Library",body:"In a small town in Japan, there is a special library. It is open until 9 p.m., so people can visit after work. The library also has a small cafe where visitors can drink coffee while reading. On weekends, the library holds free events for children, such as story time and craft lessons. Many families come to enjoy these events together. Because of this, the library has become a popular place in the town."},
+  ],qs:[
+    {q:"Why can people visit the library after work?",choices:["It is free","It is open until 9 p.m.","It has a cafe","It is near the station"],ans:1,exp:"夜9時まで開いているので仕事後に来られる。"},
+    {q:"What can visitors do at the cafe?",choices:["Buy books","Drink coffee while reading","Watch movies","Meet writers"],ans:1,exp:"読書しながらコーヒーが飲める。"},
+    {q:"What is held on weekends?",choices:["Free events for children","Cooking classes","Sports games","Music concerts"],ans:0,exp:"週末は子ども向けの無料イベント。"},
+  ]},
+  {grade:"3級",docs:[
+    {type:"物語",title:"Ken's First Day",body:"Ken moved to a new town last month. On his first day at his new school, he was very nervous because he didn't know anyone. During lunch, a boy named Taro asked Ken to eat together. They talked about soccer and found out they both liked the same team. After school, Taro invited Ken to play soccer in the park. Ken was very happy to make a new friend so quickly."},
+  ],qs:[
+    {q:"Why was Ken nervous on his first day?",choices:["He was late","He didn't know anyone","He forgot his bag","He was sick"],ans:1,exp:"誰も知らなかったので緊張していた。"},
+    {q:"What did Ken and Taro find out?",choices:["They lived nearby","They liked the same soccer team","They were in the same club","They had the same teacher"],ans:1,exp:"同じサッカーチームが好きだと分かった。"},
+    {q:"What did Taro invite Ken to do after school?",choices:["Study together","Play soccer in the park","Go shopping","Watch TV"],ans:1,exp:"放課後に公園でサッカーに誘った。"},
+  ]},
+  {grade:"準2級",docs:[
+    {type:"説明文",title:"Community Gardens",body:"In many cities, people live in apartments and do not have space to grow plants. To solve this problem, some cities have created \"community gardens.\" These are shared spaces where people can rent a small piece of land to grow vegetables or flowers. Community gardens have several benefits. First, they give people a chance to enjoy nature and exercise. Second, they help neighbors get to know each other, which makes the community stronger. Finally, growing your own vegetables can save money and is good for your health. For these reasons, community gardens are becoming more popular around the world."},
+  ],qs:[
+    {q:"What is a community garden?",choices:["A public park","A shared space to grow plants","A vegetable shop","A school project"],ans:1,exp:"野菜や花を育てられる共有の土地。"},
+    {q:"What is one benefit mentioned in the passage?",choices:["It is free to use","Neighbors get to know each other","It is only for experts","It replaces supermarkets"],ans:1,exp:"近所の人同士が知り合えてコミュニティが強くなる。"},
+    {q:"Why are community gardens becoming popular?",choices:["They have many benefits","They are required by law","They are very large","They sell vegetables"],ans:0,exp:"複数の利点があるため世界中で人気になっている。"},
+  ]},
+  {grade:"準2級",docs:[
+    {type:"Eメール",title:"Volunteer Request",body:"Dear students,\n\nOur town is holding a clean-up event at the river on Sunday, May 18. We are looking for volunteers to help pick up trash along the riverbank. Volunteers should meet at the river park at 9 a.m. Gloves and trash bags will be provided, so you don't need to bring anything. The event will finish by noon. After the clean-up, free juice and snacks will be served as a thank-you. If you would like to join, please tell your teacher by May 15."},
+  ],qs:[
+    {q:"What will volunteers do at the event?",choices:["Plant trees","Pick up trash","Clean the school","Sell snacks"],ans:1,exp:"川辺のゴミ拾いをする。"},
+    {q:"What do volunteers need to bring?",choices:["Gloves","Trash bags","Nothing","Their lunch"],ans:2,exp:"手袋とゴミ袋は支給されるので何も持参不要。"},
+    {q:"What will be given after the clean-up?",choices:["Money","A certificate","Free juice and snacks","A T-shirt"],ans:2,exp:"片付け後にお礼として無料のジュースと軽食。"},
+  ]},
+];
+
+/* ====== 英検 短文読解モード（大問3形式）====== */
+let rIdx=0, rqIdx=0, rScore=0, rAnswered=false, rDone=false, rTotalQ=0, rPool=[];
+function rFlatNo(){ let n=0; for(let p=0;p<rIdx;p++) n+=rPool[p].qs.length; return n+rqIdx+1; }
+function startReading(){
+  const g = eikenGrade();
+  rPool = READ7E.filter(function(p){ return p.grade===g; });
+  show("read");
+  if(rPool.length===0){
+    $("#rPassage").innerHTML='<div class="dresult">「英検'+g+'」の読解はまだ準備中です。<br>「級をえらぶ」で他の級をお試しください。</div>';
+    $("#rq").textContent=""; $("#rchoices").innerHTML=""; $("#rexp").style.display="none"; $("#rGrade").textContent=g;
+    $("#rCount").textContent="—"; $("#rBar").style.width="0%"; $("#rScore").textContent="";
+    rDone=true; const nb=$("#rNext"); nb.style.display="block"; nb.textContent="ホームへ"; return;
+  }
+  rIdx=0; rqIdx=0; rScore=0; rDone=false;
+  rTotalQ=rPool.reduce(function(s,p){return s+p.qs.length;},0);
+  renderReading();
+}
+function renderReading(){
+  rAnswered=false;
+  const p=rPool[rIdx]; const item=p.qs[rqIdx];
+  $("#rCount").textContent=rFlatNo()+" / "+rTotalQ;
+  $("#rBar").style.width=((rFlatNo()-1)/rTotalQ*100)+"%";
+  $("#rScore").textContent="正解 "+rScore;
+  $("#rGrade").textContent=p.grade;
+  $("#rPassage").innerHTML = p.docs.map(function(d){ return '<div class="rdoc"><span class="rtype">'+d.type+'</span><span class="rtitle">'+d.title+'</span><div class="rbody">'+d.body.replace(/\n/g,"<br>")+'</div></div>'; }).join('<div class="rsep"></div>');
+  $("#rq").textContent=item.q;
+  const e=$("#rexp"); e.style.display="none"; e.innerHTML="";
+  $("#rNext").style.display="none";
+  const keys=["A","B","C","D"];
+  const order=[0,1,2,3]; for(let z=order.length-1;z>0;z--){ const y=Math.floor(Math.random()*(z+1)); [order[z],order[y]]=[order[y],order[z]]; }
+  const box=$("#rchoices"); box.innerHTML="";
+  order.forEach(function(orig,k){
+    const b=document.createElement("button");
+    b.className="choice"; b.type="button"; b._orig=orig;
+    b.innerHTML='<span class="k">'+keys[k]+'</span><span>'+item.choices[orig]+'</span>';
+    b.addEventListener("click",function(){ readAnswer(orig,item); });
+    box.appendChild(b);
+  });
+}
+function readAnswer(i,item){
+  if(rAnswered) return; rAnswered=true;
+  const correct=(i===item.ans);
+  const btns=[].slice.call($("#rchoices").children);
+  btns.forEach(function(b){ b.disabled=true; if(b._orig===item.ans) b.classList.add("correct"); else if(b._orig===i) b.classList.add("wrong"); });
+  if(correct){ rScore++; if(soundOn && typeof playCorrect==="function") playCorrect(); }
+  else { if(soundOn && typeof playWrong==="function") playWrong(); }
+  $("#rScore").textContent="正解 "+rScore;
+  const e=$("#rexp"); e.style.display="block";
+  e.innerHTML='<div class="dexp-h '+(correct?"ok":"ng")+'">'+(correct?"正解":"不正解")+'</div><div class="dexp-b">'+item.exp+'</div>';
+  const last=(rIdx>=rPool.length-1 && rqIdx>=rPool[rIdx].qs.length-1);
+  const lastInDoc=(rqIdx>=rPool[rIdx].qs.length-1);
+  const nb=$("#rNext"); nb.style.display="block";
+  nb.textContent = last ? "結果を見る" : (lastInDoc ? "次の長文へ" : "次の設問");
+}
+function readNext(){
+  if(rIdx>=rPool.length-1 && rqIdx>=rPool[rIdx].qs.length-1){ readResult(); return; }
+  if(rqIdx>=rPool[rIdx].qs.length-1){ rIdx++; rqIdx=0; } else { rqIdx++; }
+  renderReading();
+}
+function readResult(){
+  rDone=true;
+  saveResult('read', rScore, rTotalQ);
+  const pct=Math.round(rScore/rTotalQ*100);
+  $("#rPassage").innerHTML='<div class="dresult">読解おつかれさまでした<br><span class="dbig">'+rScore+' / '+rTotalQ+'</span><br>正答率 '+pct+'%</div>';
+  $("#rq").textContent=""; $("#rchoices").innerHTML=""; $("#rexp").style.display="none"; $("#rGrade").textContent="";
+  $("#rCount").textContent="完了"; $("#rBar").style.width="100%"; $("#rScore").textContent="正解 "+rScore;
+  const nb=$("#rNext"); nb.style.display="block"; nb.textContent="ホームへ";
+}
+$("#rNext").addEventListener("click",function(){ if(rDone){ renderHome(); show("home"); } else readNext(); });
+$("#rQuit").addEventListener("click",function(){ renderHome(); show("home"); });
+
+const WRITE_E = [
+  {grade:"3級",email:"Hi! I heard you joined the basketball club. That's great! I have two questions. How often do you practice? And what do you like the most about basketball?\n\nYour friend,\nAlex",q1:"練習はどのくらいの頻度か",q2:"バスケットボールの何が一番好きか",target:"15〜25語",model:"Hi Alex! Thanks for your message. We practice three times a week after school. I like making shots with my teammates the most. It's really fun!",tips:"①あいさつ→②2つの質問に順番に答える→③ひと言、の型で書くと安定します。難しい単語は不要。中学レベルの語彙で十分です。"},
+  {grade:"3級",email:"Hello! I'm planning to visit Japan next summer. I'm so excited! I have two questions for you. What city should I visit? And what Japanese food should I try?\n\nSee you,\nEmma",q1:"どの都市を訪れるべきか",q2:"どんな日本食を試すべきか",target:"15〜25語",model:"Hi Emma! I'm happy you're coming to Japan. You should visit Kyoto because it has beautiful temples. You should try sushi. It's fresh and delicious!",tips:"You should ~（〜するといいよ）が便利。理由を because で一言添えると内容点が上がります。"},
+  {grade:"準2級",email:"Hi! My school is going to start a new volunteer program, and students can choose an activity. I'm not sure which one to pick. I have two questions. Which kind of volunteer work do you think is good for students? And why do you think so?\n\nTake care,\nDaniel",q1:"学生にどんなボランティアが良いと思うか",q2:"なぜそう思うのか",target:"30〜40語",model:"Hi Daniel! That's a great opportunity. I think cleaning parks is good for students. It helps the local community and keeps nature beautiful. Also, students can exercise and make new friends while working together. I hope this helps!",tips:"準2級は理由を具体的に。I think ... because / Also, ... と2文以上で理由を膨らませると、内容・構成の評価が上がります。"},
+  {grade:"準2級",email:"Hello! These days, many students use smartphones to study. I'm thinking about using one too. I have two questions. Do you think using a smartphone for studying is a good idea? And what is one thing students should be careful about?\n\nBest,\nSophia",q1:"勉強にスマホを使うのは良い考えだと思うか",q2:"学生が気をつけるべきことは何か",target:"30〜40語",model:"Hi Sophia! Yes, I think using a smartphone for studying is a good idea because there are many useful apps and videos. However, students should be careful not to spend too much time on games or social media. Good luck!",tips:"賛成/反対をはっきり示す→理由→注意点、の流れ。However や because などのつなぎ語を使うと論理的に見えます。"},
+];
+
+/* ====== 英検 Eメール英作文モード ====== */
+let wPool=[], wIdx=0;
+function startWriting(){
+  const g = eikenGrade();
+  wPool = WRITE_E.filter(function(x){ return x.grade===g; });
+  show("write");
+  if(wPool.length===0){
+    $("#wEmail").innerHTML='<div class="dresult" style="padding:30px 8px;text-align:center">「英検'+g+'」のEメール英作文はまだ準備中です。<br>「級をえらぶ」で3級・準2級をお試しください。</div>';
+    $("#wPoints").innerHTML=""; $("#wInput").value=""; $("#wCount").textContent=""; $("#wAnswer").style.display="none";
+    $("#wReveal").style.display="none"; $("#wGrade").textContent=g; $("#wCountTop").textContent="—";
+    const nb=$("#wNext"); nb.style.display="none"; return;
+  }
+  wIdx=0; renderWriting();
+}
+function wWordCount(){
+  const t=$("#wInput").value.trim();
+  const n=t? t.split(/\s+/).filter(Boolean).length : 0;
+  $("#wCount").textContent=n+" 語";
+}
+function renderWriting(){
+  const x=wPool[wIdx];
+  $("#wCountTop").textContent=(wIdx+1)+" / "+wPool.length;
+  $("#wGrade").textContent=x.grade;
+  $("#wEmail").innerHTML='<span class="rtype">受信メール</span><div class="rbody">'+x.email.replace(/\n/g,"<br>")+'</div>';
+  $("#wPoints").innerHTML='<div class="wph">返信に必ず含める2点</div><ol><li>'+x.q1+'</li><li>'+x.q2+'</li></ol><div class="wtgt">語数の目安：'+x.target+'</div>';
+  $("#wInput").value="";
+  wWordCount();
+  $("#wAnswer").style.display="none"; $("#wAnswer").innerHTML="";
+  $("#wReveal").style.display="block";
+  const nb=$("#wNext"); nb.style.display="none";
+  nb.textContent = (wIdx>=wPool.length-1) ? "最初に戻る" : "次の問題";
+}
+function wReveal(){
+  const x=wPool[wIdx];
+  const a=$("#wAnswer");
+  a.style.display="block";
+  a.innerHTML =
+    '<div class="wsec"><div class="wsec-h">模範解答</div><div class="wmodel">'+x.model.replace(/\n/g,"<br>")+'</div></div>'
+   +'<div class="wsec"><div class="wsec-h">自己採点（英検の3観点）</div>'
+   +'<ul class="wrub">'
+   +'<li><b>内容</b>：相手のメールに対応し、2つの内容（'+x.q1+'／'+x.q2+'）に答えられていますか？</li>'
+   +'<li><b>語彙</b>：その級にふさわしい語彙を、正しく使えていますか？</li>'
+   +'<li><b>文法</b>：意味が通じる正しい文構造で書けていますか？</li>'
+   +'</ul></div>'
+   +'<div class="wsec"><div class="wsec-h">書き方のコツ</div><div class="wtips">'+x.tips+'</div></div>';
+  $("#wReveal").style.display="none";
+  $("#wNext").style.display="block";
+}
+function wNext(){ if(wIdx>=wPool.length-1){ wIdx=0; } else { wIdx++; } renderWriting(); }
+$("#wInput") && $("#wInput").addEventListener("input", wWordCount);
+$("#wReveal").addEventListener("click", wReveal);
+$("#wNext").addEventListener("click", wNext);
+$("#wQuit").addEventListener("click", function(){ renderHome(); show("home"); });
+
+$("#startBtn").addEventListener("click",()=>{ if(mode==="drill") startDrill(); else if(mode==="read") startReading(); else if(mode==="write") startWriting(); else if(mode==="study") startStudy(); else startSession(); });
 $("#nextBtn").addEventListener("click",next);
 function updateSoundBtn(){ $("#soundBtn").textContent = soundOn ? "🔊 効果音 ON" : "🔇 効果音 OFF"; }
 $("#soundBtn").addEventListener("click",()=>{
