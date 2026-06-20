@@ -1,4 +1,4 @@
-const CACHE = 'phono-tango-eiken-v5';
+const CACHE = 'phono-tango-eiken-v6';
 const ASSETS = ['./','./index.html','./manifest.json','./icon-192.png','./icon-512.png'];
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c)=>Promise.allSettled(ASSETS.map((a)=>c.add(a)))).then(()=>self.skipWaiting()));

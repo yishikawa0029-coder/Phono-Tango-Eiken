@@ -256,6 +256,14 @@
     .brand h1{ color:var(--ink); } .brand h1 span{ color:var(--muted); }
     .count, .dscore{ color:var(--ink) !important; }
   </style>
+
+  <style>
+    .home-sec{ background:#FFFFFF; border:1px solid var(--line); border-radius:18px; padding:16px; margin-bottom:14px; }
+    .home-sec.sec-vocab{ border-top:4px solid #6C5CE7; }
+    .home-sec.sec-eiken{ border-top:4px solid #00A88E; }
+    .home-sec-h{ font-weight:800; font-size:15px; margin:2px 0 12px; letter-spacing:.02em; }
+    .home-sec .section-label:first-of-type{ margin-top:0 }
+  </style>
 </head>
 <body>
 <div class="app">
@@ -272,59 +280,69 @@
       <div class="stat"><div class="num" id="statWeak">0</div><div class="lbl">苦手な単語</div></div>
     </div>
 
-    <p class="section-label">単語帳をえらぶ</p>
-    <div class="set-pick">
-      <select id="setSelect" aria-label="単語帳をえらぶ"></select>
+    <div class="home-sec sec-vocab">
+      <div class="home-sec-h">📖 単語で覚える</div>
+      <p class="section-label">単語帳をえらぶ</p>
+      <div class="set-pick">
+        <select id="setSelect" aria-label="単語帳をえらぶ"></select>
+      </div>
+
+      <p class="section-label" style="margin-top:16px">モードをえらぶ</p>
+      <div class="mode-grid">
+        <button class="mode" data-mode="choice" aria-pressed="true">
+          <span class="ico">📖</span>
+          <span><span class="t">4択モード</span><span class="d">英単語を見て、意味を4つから選ぶ</span></span>
+        </button>
+        <button class="mode" data-mode="listen" aria-pressed="false">
+          <span class="ico">🔊</span>
+          <span><span class="t">発音モード</span><span class="d">発音を聞いて、意味を4つから選ぶ</span></span>
+        </button>
+        <button class="mode" data-mode="study" aria-pressed="false">
+          <span class="ico">🧠</span>
+          <span><span class="t">覚えるモード</span><span class="d">カードで意味・発音・例文を見て覚える</span></span>
+        </button>
+      </div>
+
+      <p class="section-label" style="margin-top:16px">出題する範囲</p>
+      <div class="pills" id="rangePills">
+        <button class="pill" data-range="all" aria-pressed="true">すべての単語</button>
+        <button class="pill" id="weakPill" data-range="weak" aria-pressed="false">苦手だけ (0)</button>
+      </div>
+
+      <p class="section-label" style="margin-top:16px">出題する数</p>
+      <div class="pills" id="countPills">
+        <button class="pill" data-count="10" aria-pressed="true">10問</button>
+        <button class="pill" data-count="20" aria-pressed="false">20問</button>
+        <button class="pill" data-count="50" aria-pressed="false">50問</button>
+        <button class="pill" data-count="all" aria-pressed="false">ぜんぶ</button>
+      </div>
     </div>
 
-    <p class="section-label" style="margin-top:18px">級をえらぶ（演習・読解・英作文）</p>
-    <div class="pills" id="gradePills">
-      <button class="pill" data-grade="5級" aria-pressed="false">5級</button>
-      <button class="pill" data-grade="4級" aria-pressed="false">4級</button>
-      <button class="pill" data-grade="3級" aria-pressed="true">3級</button>
-      <button class="pill" data-grade="準2級" aria-pressed="false">準2級</button>
-    </div>
+    <div class="home-sec sec-eiken">
+      <div class="home-sec-h">📝 英検の問題を解く</div>
+      <p class="section-label">級をえらぶ</p>
+      <div class="pills" id="gradePills">
+        <button class="pill" data-grade="5級" aria-pressed="false">5級</button>
+        <button class="pill" data-grade="4級" aria-pressed="false">4級</button>
+        <button class="pill" data-grade="3級" aria-pressed="true">3級</button>
+        <button class="pill" data-grade="準2級" aria-pressed="false">準2級</button>
+      </div>
 
-    <p class="section-label" style="margin-top:18px">モードをえらぶ</p>
-    <div class="mode-grid">
-      <button class="mode" data-mode="choice" aria-pressed="true">
-        <span class="ico">📖</span>
-        <span><span class="t">4択モード</span><span class="d">英単語を見て、意味を4つから選ぶ</span></span>
-      </button>
-      <button class="mode" data-mode="listen" aria-pressed="false">
-        <span class="ico">🔊</span>
-        <span><span class="t">発音モード</span><span class="d">発音を聞いて、意味を4つから選ぶ</span></span>
-      </button>
-      <button class="mode" data-mode="study" aria-pressed="false">
-        <span class="ico">🧠</span>
-        <span><span class="t">覚えるモード</span><span class="d">カードで意味・発音・例文を見て覚える</span></span>
-      </button>
-      <button class="mode" data-mode="drill" aria-pressed="false">
-        <span class="ico">📝</span>
-        <span><span class="t">語句空所補充</span><span class="d">英検 大問1形式。級にあわせて空所を補う</span></span>
-      </button>
-      <button class="mode" data-mode="read" aria-pressed="false">
-        <span class="ico">📄</span>
-        <span><span class="t">読解</span><span class="d">英検 大問3形式。長文を読んで内容を答える</span></span>
-      </button>
-      <button class="mode" data-mode="write" aria-pressed="false">
-        <span class="ico">✉️</span>
-        <span><span class="t">Eメール英作文</span><span class="d">英検 新形式。返信を書いて模範解答で確認</span></span>
-      </button>
-    </div>
-
-    <p class="section-label" style="margin-top:18px">出題する範囲</p>
-    <div class="pills" id="rangePills">
-      <button class="pill" data-range="all" aria-pressed="true">すべての単語</button>
-      <button class="pill" id="weakPill" data-range="weak" aria-pressed="false">苦手だけ (0)</button>
-    </div>
-
-    <p class="section-label" style="margin-top:18px">出題する数</p>
-    <div class="pills" id="countPills">
-      <button class="pill" data-count="10" aria-pressed="true">10問</button>
-      <button class="pill" data-count="20" aria-pressed="false">20問</button>
-      <button class="pill" data-count="50" aria-pressed="false">50問</button>
-      <button class="pill" data-count="all" aria-pressed="false">ぜんぶ</button>
+      <p class="section-label" style="margin-top:16px">モードをえらぶ</p>
+      <div class="mode-grid">
+        <button class="mode" data-mode="drill" aria-pressed="false">
+          <span class="ico">📝</span>
+          <span><span class="t">語句空所補充</span><span class="d">英検 大問1形式。級にあわせて空所を補う</span></span>
+        </button>
+        <button class="mode" data-mode="read" aria-pressed="false">
+          <span class="ico">📄</span>
+          <span><span class="t">読解</span><span class="d">英検 大問3形式。長文を読んで内容を答える</span></span>
+        </button>
+        <button class="mode" data-mode="write" aria-pressed="false">
+          <span class="ico">✉️</span>
+          <span><span class="t">Eメール英作文</span><span class="d">英検 新形式。返信を書いて模範解答で確認</span></span>
+        </button>
+      </div>
     </div>
 
     <div style="margin-top:18px"><button class="btn" id="startBtn">はじめる</button></div>
@@ -2852,20 +2870,11 @@ function eikenGrade(){
   return p ? p.dataset.grade : "3級";
 }
 function startDrill(){
-  let pool = QUIZ1E.slice();
   const g = eikenGrade();
-  if(g){ const f=pool.filter(q=>q.point===g); if(f.length>=4) pool=f; }
-  const rw=document.querySelector('#rangePills .pill[aria-pressed="true"]');
-  if(rw && rw.dataset.range==="weak"){
-    const ps=qsLoad(LS_Q1PTS,{});
-    const weak=Object.entries(ps).filter(([k,v])=>v.t>=3 && (v.c/v.t)<0.8).map(([k])=>k);
-    if(weak.length){ const f=pool.filter(q=>weak.indexOf(q.point)>=0); if(f.length>=4) pool=f; }
-  }
+  let pool = QUIZ1E.filter(function(q){ return q.point===g; });
+  if(pool.length<4) pool = QUIZ1E.slice();
   dq=pool;
   for(let i=dq.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [dq[i],dq[j]]=[dq[j],dq[i]]; }
-  const cp=document.querySelector('#countPills .pill[aria-pressed="true"]');
-  let cnt=cp?cp.dataset.count:"all";
-  if(cnt!=="all"){ dq=dq.slice(0, Math.min(parseInt(cnt,10), dq.length)); }
   dIdx=0; dScore=0; drillDone=false;
   show("drill"); renderDrill();
 }
